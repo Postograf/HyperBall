@@ -11,13 +11,16 @@ public class ObjectPool : MonoBehaviour
     
     private Camera _camera;
     private float _disableOffsetZ;
+    private int _activeObjects;
     private List<GameObject> _pool = new List<GameObject>();
 
     public int Capacity => _capacity;
+    public bool IsFull => _activeObjects == 0;
+    public bool IsEmpty => _capacity == _activeObjects;
 
     protected void Initialize(GameObject prefab)
     {
-        _disableOffsetZ = prefab.transform.localScale.z / 2;
+        _disableOffsetZ = prefab.transform.localScale.z;
 
         _camera = Camera.main;
 
@@ -30,13 +33,17 @@ public class ObjectPool : MonoBehaviour
         }
     }
 
-
-
-    protected bool TryGetObject(out GameObject result)
+    public bool TryGetObject(out GameObject result)
     {
         result = _pool.FirstOrDefault(x => !x.activeSelf);
 
-        return result != null;
+        if (result != null)
+        {
+            _activeObjects++;
+            return true;
+        }
+
+        return false;
     }
 
     protected void DisableObjectsAboardScreen()
@@ -48,7 +55,10 @@ public class ObjectPool : MonoBehaviour
             if (item.activeSelf)
             {
                 if (item.transform.position.z < disablePoint.z - _disableOffsetZ)
+                {
                     item.SetActive(false);
+                    _activeObjects--;
+                }
             }
         }
     }
